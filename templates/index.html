@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>株価学習アプリ MVP</title>
+    <style>
+        .chart-container {
+            width: 80%;
+            margin: auto;
+            padding-top: 20px;
+        }
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">日経平均株価 (直近6ヶ月)</h1>
+    <div class="chart-container">
+        <canvas id="stockChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>
