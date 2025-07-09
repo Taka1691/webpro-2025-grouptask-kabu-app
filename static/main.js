@@ -1,8 +1,8 @@
 // グローバル変数
 let myChart = null;
-let allTickers = []; // 全銘柄リストを保持
-const famousTickers = ["7203", "9984", "6758", "9432", "8306"]; // 有名株の例
-let highlightedIndex = -1; // ハイライトされている候補のインデックスを管理
+let allTickers = [];
+const famousTickers = ["7203", "9984", "6758", "9432", "8306"];
+let highlightedIndex = -1;
 
 /**
  * 銘柄リストをJSONファイルから読み込む
@@ -18,21 +18,41 @@ async function loadTickers() {
 
 /**
  * 指定されたティッカーシンボルでグラフを描画する関数
- * @param {string} tickerSymbol - ティッカーシンボル
  */
 async function drawChart(tickerSymbol) {
     const response = await fetch(`/api/stock/${tickerSymbol}`);
     const responseData = await response.json();
-
     if (responseData.error) {
         alert(`エラー: ${responseData.error}`);
         return;
     }
     const history = responseData.history;
     const info = responseData.info;
-
     const labels = history.map(item => new Date(item.Date).toLocaleDateString());
     const closingPrices = history.map(item => item.Close);
+
+    // 月ごとの騰落を事前に計算
+    const monthlyTrends = {};
+    const monthlyData = {};
+    history.forEach(item => {
+        const date = new Date(item.Date);
+        const yearMonth = `${date.getFullYear()}-${date.getMonth()}`;
+        if (!monthlyData[yearMonth]) {
+            monthlyData[yearMonth] = [];
+        }
+        monthlyData[yearMonth].push(item.Close);
+    });
+    const upColor = '46, 204, 113';
+    const downColor = '231, 76, 60';
+    const neutralColor = '204, 204, 204';
+    for (const yearMonth in monthlyData) {
+        const prices = monthlyData[yearMonth];
+        if (prices.length > 1) {
+            monthlyTrends[yearMonth] = prices[prices.length - 1] >= prices[0] ? upColor : downColor;
+        } else {
+            monthlyTrends[yearMonth] = neutralColor;
+        }
+    }
 
     const ctx = document.getElementById('stockChart').getContext('2d');
     if (myChart) {
@@ -45,9 +65,21 @@ async function drawChart(tickerSymbol) {
             datasets: [{
                 label: `${tickerSymbol} (${info.name}) (終値)`,
                 data: closingPrices,
-                borderColor: '#34C759',
+                fill: 'origin',
+                segment: {
+                    borderColor: (context) => `rgb(${monthlyTrends[`${new Date(history[context.p0DataIndex].Date).getFullYear()}-${new Date(history[context.p0DataIndex].Date).getMonth()}`]})`,
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const rgbColor = monthlyTrends[`${new Date(history[context.p0DataIndex].Date).getFullYear()}-${new Date(history[context.p0DataIndex].Date).getMonth()}`];
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, `rgba(${rgbColor}, 0.5)`);
+                        gradient.addColorStop(1, `rgba(${rgbColor}, 0)`);
+                        return gradient;
+                    },
+                },
                 borderWidth: 2,
-                fill: false,
                 tension: 0.1,
                 pointRadius: 0,
                 pointHoverRadius: 5
@@ -79,23 +111,18 @@ async function drawChart(tickerSymbol) {
     });
 }
 
-/**
- * ニュースを取得して表示する関数
- */
 async function fetchNews() {
+    // ... (fetchNews関数の中身は変更なし) ...
     const newsContainer = document.getElementById('news-container');
     try {
         const response = await fetch('/api/news');
         const articles = await response.json();
-
-        if (!newsContainer) return; // studyページなど、コンテナがない場合は何もしない
-
+        if (!newsContainer) return;
         if (articles.error) {
             console.error("ニュースの取得に失敗:", articles.error);
             newsContainer.innerHTML = '<h2>ニュースの取得に失敗しました</h2>';
             return;
         }
-
         newsContainer.innerHTML = '<h2>関連ニュース</h2>';
         articles.slice(0, 10).forEach(article => {
             const articleEl = document.createElement('div');
@@ -111,15 +138,12 @@ async function fetchNews() {
     }
 }
 
-/**
- * サジェスト候補を更新・表示する関数
- */
 function updateSuggestions(query) {
+    // ... (updateSuggestions関数の中身は変更なし) ...
     const suggestionsBox = document.getElementById('suggestions-box');
-    if (!suggestionsBox) return; // 検索バーがないページでは何もしない
+    if (!suggestionsBox) return;
     suggestionsBox.innerHTML = '';
     highlightedIndex = -1;
-
     let suggestions = [];
     if (query === '') {
         suggestions = allTickers.filter(t => famousTickers.includes(t.code));
@@ -128,12 +152,10 @@ function updateSuggestions(query) {
                                 .sort((a, b) => parseInt(a.code, 10) - parseInt(b.code, 10))
                                 .slice(0, 10);
     }
-
     if (suggestions.length === 0) {
         suggestionsBox.style.display = 'none';
         return;
     }
-
     suggestions.forEach(ticker => {
         const item = document.createElement('div');
         item.className = 'suggestion-item';
@@ -141,14 +163,11 @@ function updateSuggestions(query) {
         item.dataset.ticker = ticker.code;
         suggestionsBox.appendChild(item);
     });
-
     suggestionsBox.style.display = 'block';
 }
 
-/**
- * ハイライト表示を更新する関数
- */
 function updateHighlight() {
+    // ... (updateHighlight関数の中身は変更なし) ...
     const suggestionsBox = document.getElementById('suggestions-box');
     if (!suggestionsBox) return;
     const items = suggestionsBox.querySelectorAll('.suggestion-item');
@@ -161,35 +180,43 @@ function updateHighlight() {
     });
 }
 
+
 // ページの読み込みが完了したらすべての処理を開始
 window.addEventListener('load', async () => {
-    // ページに検索機能がある場合のみ、関連する処理を実行
     if (document.getElementById('search-button')) {
         const loadTickersPromise = loadTickers();
         const fetchNewsPromise = fetchNews();
-        drawChart('^N225');
         
         const searchButton = document.getElementById('search-button');
         const tickerInput = document.getElementById('ticker-input');
         const suggestionsBox = document.getElementById('suggestions-box');
 
+        // ★★★ ここからが修正箇所 ★★★
         function performSearch() {
-            const ticker = tickerInput.value;
-            if (ticker) {
+            const ticker = tickerInput.value.trim(); // 入力値の前後にある空白を削除
+            if (!ticker) return;
+
+            // 日経平均の特別扱い
+            const nikkeiAliases = ['^N225', 'nikkei', 'にっけい', '日経', '日経平均'];
+            if (nikkeiAliases.includes(ticker.toLowerCase())) {
+                drawChart('^N225');
+            } else {
+                // 通常の個別銘柄
                 drawChart(ticker + ".T");
-                suggestionsBox.style.display = 'none';
             }
+            suggestionsBox.style.display = 'none';
         }
+        // ★★★ ここまでが修正箇所 ★★★
 
         searchButton.addEventListener('click', performSearch);
         
         tickerInput.addEventListener('keydown', (event) => {
+            // ... (keydownリスナーの中身は変更なし) ...
             const items = suggestionsBox.querySelectorAll('.suggestion-item');
             if (items.length === 0 || suggestionsBox.style.display === 'none') {
-                if(event.key === 'Enter') performSearch(); // サジェストがなくてもEnter検索
+                if(event.key === 'Enter') performSearch();
                 return;
             };
-
             switch (event.key) {
                 case 'ArrowDown':
                     event.preventDefault();
@@ -225,17 +252,17 @@ window.addEventListener('load', async () => {
             }
         });
         
+        // 初期表示
+        drawChart('^N225');
         await loadTickersPromise;
     }
 
-    // 全ページ共通のイベントリスナー
     const menuToggle = document.getElementById('menu-toggle');
     document.addEventListener('click', (event) => {
         const suggestionsBox = document.getElementById('suggestions-box');
         if (suggestionsBox && !event.target.closest('#search-wrapper')) {
             suggestionsBox.style.display = 'none';
         }
-        
         if (menuToggle && !event.target.closest('.hamburger-menu')) {
             menuToggle.checked = false;
         }
