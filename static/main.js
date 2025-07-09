@@ -1,12 +1,55 @@
-// グローバル変数
+// スプラッシュスクリーンの制御
+window.addEventListener('DOMContentLoaded', () => {
+    const splashScreen = document.getElementById('splash-screen');
+    const helloText = document.getElementById('splash-text');
+    const captionText = document.getElementById('splash-caption');
+
+    // 何らかの理由で要素がなければ何もしない
+    if (!splashScreen || !helloText || !captionText) return;
+
+    // 1. 0.1秒後に「Hello, World!」をフェードイン
+    setTimeout(() => {
+        helloText.style.opacity = '1';
+    }, 100);
+
+    // 2. 2.5秒後に「Hello, World!」をフェードアウト
+    setTimeout(() => {
+        helloText.style.opacity = '0';
+    }, 2500);
+
+    // 3. 3.5秒後に「Hello, World!」を非表示にし、キャプションを表示準備
+    setTimeout(() => {
+        helloText.style.display = 'none';
+        captionText.classList.remove('hidden');
+        
+        // キャプションをフェードイン
+        setTimeout(() => {
+            captionText.style.opacity = '1';
+        }, 100); // すぐに開始
+    }, 3500);
+
+    // 4. 6秒後にキャプションをフェードアウト
+    setTimeout(() => {
+        captionText.style.opacity = '0';
+    }, 6000);
+
+    // 5. 7秒後にスプラッシュスクリーン全体をフェードアウト
+    setTimeout(() => {
+        splashScreen.style.opacity = '0';
+        
+        // フェードアウトアニメーションが終わったら、要素を完全に消す
+        setTimeout(() => {
+            splashScreen.style.display = 'none';
+        }, 1000); // CSSのtransition時間と合わせる
+    }, 7000);
+});
+
+// --- これより下のコードは変更なし ---
 let myChart = null;
 let allTickers = [];
 const famousTickers = ["7203", "9984", "6758", "9432", "8306"];
 let highlightedIndex = -1;
 
-/**
- * 銘柄リストをJSONファイルから読み込む
- */
 async function loadTickers() {
     try {
         const response = await fetch('/static/tse_list.json');
@@ -16,9 +59,6 @@ async function loadTickers() {
     }
 }
 
-/**
- * 指定されたティッカーシンボルでグラフを描画する関数
- */
 async function drawChart(tickerSymbol) {
     const response = await fetch(`/api/stock/${tickerSymbol}`);
     const responseData = await response.json();
@@ -31,7 +71,6 @@ async function drawChart(tickerSymbol) {
     const labels = history.map(item => new Date(item.Date).toLocaleDateString());
     const closingPrices = history.map(item => item.Close);
 
-    // 月ごとの騰落を事前に計算
     const monthlyTrends = {};
     const monthlyData = {};
     history.forEach(item => {
@@ -112,7 +151,6 @@ async function drawChart(tickerSymbol) {
 }
 
 async function fetchNews() {
-    // ... (fetchNews関数の中身は変更なし) ...
     const newsContainer = document.getElementById('news-container');
     try {
         const response = await fetch('/api/news');
@@ -139,7 +177,6 @@ async function fetchNews() {
 }
 
 function updateSuggestions(query) {
-    // ... (updateSuggestions関数の中身は変更なし) ...
     const suggestionsBox = document.getElementById('suggestions-box');
     if (!suggestionsBox) return;
     suggestionsBox.innerHTML = '';
@@ -167,7 +204,6 @@ function updateSuggestions(query) {
 }
 
 function updateHighlight() {
-    // ... (updateHighlight関数の中身は変更なし) ...
     const suggestionsBox = document.getElementById('suggestions-box');
     if (!suggestionsBox) return;
     const items = suggestionsBox.querySelectorAll('.suggestion-item');
@@ -180,38 +216,27 @@ function updateHighlight() {
     });
 }
 
-
-// ページの読み込みが完了したらすべての処理を開始
 window.addEventListener('load', async () => {
     if (document.getElementById('search-button')) {
         const loadTickersPromise = loadTickers();
         const fetchNewsPromise = fetchNews();
-        
+        drawChart('^N225');
         const searchButton = document.getElementById('search-button');
         const tickerInput = document.getElementById('ticker-input');
         const suggestionsBox = document.getElementById('suggestions-box');
-
-        // ★★★ ここからが修正箇所 ★★★
         function performSearch() {
-            const ticker = tickerInput.value.trim(); // 入力値の前後にある空白を削除
+            const ticker = tickerInput.value.trim();
             if (!ticker) return;
-
-            // 日経平均の特別扱い
             const nikkeiAliases = ['^N225', 'nikkei', 'にっけい', '日経', '日経平均'];
             if (nikkeiAliases.includes(ticker.toLowerCase())) {
                 drawChart('^N225');
             } else {
-                // 通常の個別銘柄
                 drawChart(ticker + ".T");
             }
             suggestionsBox.style.display = 'none';
         }
-        // ★★★ ここまでが修正箇所 ★★★
-
         searchButton.addEventListener('click', performSearch);
-        
         tickerInput.addEventListener('keydown', (event) => {
-            // ... (keydownリスナーの中身は変更なし) ...
             const items = suggestionsBox.querySelectorAll('.suggestion-item');
             if (items.length === 0 || suggestionsBox.style.display === 'none') {
                 if(event.key === 'Enter') performSearch();
@@ -241,19 +266,14 @@ window.addEventListener('load', async () => {
                     break;
             }
         });
-
         tickerInput.addEventListener('input', () => updateSuggestions(tickerInput.value));
         tickerInput.addEventListener('focus', () => updateSuggestions(tickerInput.value));
-        
         suggestionsBox.addEventListener('click', (event) => {
             if (event.target.classList.contains('suggestion-item')) {
                 tickerInput.value = event.target.dataset.ticker;
                 performSearch();
             }
         });
-        
-        // 初期表示
-        drawChart('^N225');
         await loadTickersPromise;
     }
 

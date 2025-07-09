@@ -12,20 +12,43 @@
             background-color: #000000;
             color: #FFFFFF;
         }
-        .container {
-            width: 90%;
-            max-width: 960px;
-            margin: auto;
-            overflow: hidden;
-            padding: 20px 0;
+        
+        /* ★★★ スプラッシュスクリーン用のスタイル ★★★ */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 1s ease-out;
         }
-        h1, h2 {
+        /* ２つのテキストを重ねて中央に配置するための設定 */
+        #splash-text, #splash-caption {
+            position: absolute;
             text-align: center;
             color: #FFFFFF;
-            font-weight: 600;
+            font-weight: 300;
+            opacity: 0; /* 初期状態は透明 */
+            transition: opacity 1s ease-in-out; /* 1秒かけてフェードイン/アウト */
+        }
+        #splash-text {
+            font-size: 3rem;
+        }
+        #splash-caption {
+            font-size: 1.5rem;
+        }
+        /* JavaScriptで表示を切り替えるためのヘルパークラス */
+        .hidden {
+            display: none;
         }
 
-        /* ヘッダーとメニュー */
+        /* --- 以下、既存のスタイル --- */
         .header {
             display: flex;
             justify-content: space-between;
@@ -37,6 +60,18 @@
             color: #FFF;
             text-decoration: none;
             font-size: 20px;
+            font-weight: 600;
+        }
+        .container {
+            width: 90%;
+            max-width: 960px;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px 0;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #FFFFFF;
             font-weight: 600;
         }
         .hamburger-menu {
@@ -99,8 +134,6 @@
         .menu-list li a:hover {
             background-color: #444;
         }
-
-        /* 検索機能 */
         .content-wrapper, #search-wrapper-parent {
             text-align: center;
         }
@@ -151,8 +184,6 @@
         .suggestion-item:hover, .suggestion-item.highlighted {
             background-color: #444;
         }
-        
-        /* グラフとニュース */
         .chart-container {
             background: #1C1C1E;
             padding: 20px;
@@ -179,6 +210,11 @@
     </style>
 </head>
 <body>
+    <div id="splash-screen">
+        <div id="splash-text">Hello, World!</div>
+        <div id="splash-caption" class="hidden">Let's explore the world of stocks together!</div>
+    </div>
+
     <header class="header">
         <h1 class="header-title"><a href="/">株価学習アプリ</a></h1>
         <nav class="hamburger-menu">
