@@ -13,7 +13,7 @@
             color: #FFFFFF;
         }
         
-        /* ★★★ スプラッシュスクリーン用のスタイル ★★★ */
+        /* スプラッシュスクリーン用のスタイル */
         #splash-screen {
             position: fixed;
             top: 0;
@@ -28,14 +28,13 @@
             opacity: 1;
             transition: opacity 1s ease-out;
         }
-        /* ２つのテキストを重ねて中央に配置するための設定 */
         #splash-text, #splash-caption {
             position: absolute;
             text-align: center;
             color: #FFFFFF;
             font-weight: 300;
-            opacity: 0; /* 初期状態は透明 */
-            transition: opacity 1s ease-in-out; /* 1秒かけてフェードイン/アウト */
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
         }
         #splash-text {
             font-size: 3rem;
@@ -43,12 +42,11 @@
         #splash-caption {
             font-size: 1.5rem;
         }
-        /* JavaScriptで表示を切り替えるためのヘルパークラス */
         .hidden {
             display: none;
         }
 
-        /* --- 以下、既存のスタイル --- */
+        /* ヘッダーとメニュー */
         .header {
             display: flex;
             justify-content: space-between;
@@ -68,6 +66,7 @@
             margin: auto;
             overflow: hidden;
             padding: 20px 0;
+            animation: pageFadeIn 0.5s ease-in-out;
         }
         h1, h2 {
             text-align: center;
@@ -184,6 +183,8 @@
         .suggestion-item:hover, .suggestion-item.highlighted {
             background-color: #444;
         }
+        
+        /* グラフとニュース */
         .chart-container {
             background: #1C1C1E;
             padding: 20px;
@@ -206,6 +207,16 @@
         }
         .news-article h4 a:hover {
             text-decoration: underline;
+        }
+
+        /* ページ遷移時のフェードインアニメーション定義 */
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>

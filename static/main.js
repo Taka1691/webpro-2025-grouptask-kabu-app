@@ -1,10 +1,20 @@
 // スプラッシュスクリーンの制御
 window.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
+    
+    // sessionStorageに「表示済み」の記録があるか確認
+    if (sessionStorage.getItem('splashSeen')) {
+        // 記録があれば、スプラッシュスクリーンを即座に非表示にして処理を終了
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+        }
+        return;
+    }
+
+    // --- 以下は初回表示時のみ実行されるアニメーション処理 ---
     const helloText = document.getElementById('splash-text');
     const captionText = document.getElementById('splash-caption');
-
-    // 何らかの理由で要素がなければ何もしない
+    
     if (!splashScreen || !helloText || !captionText) return;
 
     // 1. 0.1秒後に「Hello, World!」をフェードイン
@@ -25,7 +35,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // キャプションをフェードイン
         setTimeout(() => {
             captionText.style.opacity = '1';
-        }, 100); // すぐに開始
+        }, 100);
     }, 3500);
 
     // 4. 6秒後にキャプションをフェードアウト
@@ -37,19 +47,23 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         splashScreen.style.opacity = '0';
         
-        // フェードアウトアニメーションが終わったら、要素を完全に消す
+        // フェードアウトアニメーションが終わったら、要素を完全に消し、記録を残す
         setTimeout(() => {
             splashScreen.style.display = 'none';
-        }, 1000); // CSSのtransition時間と合わせる
+            sessionStorage.setItem('splashSeen', 'true');
+        }, 1000);
     }, 7000);
 });
 
-// --- これより下のコードは変更なし ---
+// グローバル変数
 let myChart = null;
 let allTickers = [];
 const famousTickers = ["7203", "9984", "6758", "9432", "8306"];
 let highlightedIndex = -1;
 
+/**
+ * 銘柄リストをJSONファイルから読み込む
+ */
 async function loadTickers() {
     try {
         const response = await fetch('/static/tse_list.json');
@@ -59,6 +73,9 @@ async function loadTickers() {
     }
 }
 
+/**
+ * 指定されたティッカーシンボルでグラフを描画する関数
+ */
 async function drawChart(tickerSymbol) {
     const response = await fetch(`/api/stock/${tickerSymbol}`);
     const responseData = await response.json();
@@ -150,6 +167,9 @@ async function drawChart(tickerSymbol) {
     });
 }
 
+/**
+ * ニュースを取得して表示する関数
+ */
 async function fetchNews() {
     const newsContainer = document.getElementById('news-container');
     try {
@@ -176,6 +196,9 @@ async function fetchNews() {
     }
 }
 
+/**
+ * サジェスト候補を更新・表示する関数
+ */
 function updateSuggestions(query) {
     const suggestionsBox = document.getElementById('suggestions-box');
     if (!suggestionsBox) return;
@@ -203,6 +226,9 @@ function updateSuggestions(query) {
     suggestionsBox.style.display = 'block';
 }
 
+/**
+ * ハイライト表示を更新する関数
+ */
 function updateHighlight() {
     const suggestionsBox = document.getElementById('suggestions-box');
     if (!suggestionsBox) return;
@@ -216,14 +242,18 @@ function updateHighlight() {
     });
 }
 
+// ページの読み込みが完了したらすべての処理を開始
 window.addEventListener('load', async () => {
+    // ページに検索機能がある場合のみ、関連する処理を実行
     if (document.getElementById('search-button')) {
         const loadTickersPromise = loadTickers();
         const fetchNewsPromise = fetchNews();
         drawChart('^N225');
+        
         const searchButton = document.getElementById('search-button');
         const tickerInput = document.getElementById('ticker-input');
         const suggestionsBox = document.getElementById('suggestions-box');
+
         function performSearch() {
             const ticker = tickerInput.value.trim();
             if (!ticker) return;
@@ -235,7 +265,9 @@ window.addEventListener('load', async () => {
             }
             suggestionsBox.style.display = 'none';
         }
+
         searchButton.addEventListener('click', performSearch);
+        
         tickerInput.addEventListener('keydown', (event) => {
             const items = suggestionsBox.querySelectorAll('.suggestion-item');
             if (items.length === 0 || suggestionsBox.style.display === 'none') {
@@ -266,23 +298,28 @@ window.addEventListener('load', async () => {
                     break;
             }
         });
+
         tickerInput.addEventListener('input', () => updateSuggestions(tickerInput.value));
         tickerInput.addEventListener('focus', () => updateSuggestions(tickerInput.value));
+        
         suggestionsBox.addEventListener('click', (event) => {
             if (event.target.classList.contains('suggestion-item')) {
                 tickerInput.value = event.target.dataset.ticker;
                 performSearch();
             }
         });
+        
         await loadTickersPromise;
     }
 
+    // 全ページ共通のイベントリスナー
     const menuToggle = document.getElementById('menu-toggle');
     document.addEventListener('click', (event) => {
         const suggestionsBox = document.getElementById('suggestions-box');
         if (suggestionsBox && !event.target.closest('#search-wrapper')) {
             suggestionsBox.style.display = 'none';
         }
+        
         if (menuToggle && !event.target.closest('.hamburger-menu')) {
             menuToggle.checked = false;
         }
