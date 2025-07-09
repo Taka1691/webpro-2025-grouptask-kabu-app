@@ -1,27 +1,19 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>株価学習アプリ MVP</title>
-    <style>
-        .chart-container {
-            width: 80%;
-            margin: auto;
-            padding-top: 20px;
-        }
-        body {
-            font-family: sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <h1 style="text-align: center;">日経平均株価 (直近6ヶ月)</h1>
+{% extends "layout.html" %}
+
+{% block content %}
+    <h1>株価チャート</h1>
+
+    <div id="search-wrapper">
+        <div id="search-container">
+            <input type="text" id="ticker-input" placeholder="例: 7203 (トヨタ自動車)" autocomplete="off">
+            <button id="search-button">検索</button>
+        </div>
+        <div id="suggestions-box"></div>
+    </div>
+
     <div class="chart-container">
         <canvas id="stockChart"></canvas>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="/static/main.js"></script>
-</body>
-</html>
+    <div id="news-container"></div>
+{% endblock %}
