@@ -7,3 +7,6 @@ __pycache__/
 
 # VSCodeの設定フォルダ
 .vscode/
+
+# 環境変数ファイル
+.env
